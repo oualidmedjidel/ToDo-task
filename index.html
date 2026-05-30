@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Soleil Italien — Tâches</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f5f0e8;
+            --paper: #fdfaf4;
+            --ink: #1a1208;
+            --accent: #c84b2f;
+            --muted: #9b8e7a;
+            --line: #e0d8c8;
+            --done-bg: #f0ece4;
+            --shadow: 0 2px 20px rgba(26,18,8,0.08);
+        }
+
+        body {
+            font-family: 'DM Mono', monospace;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(200,75,47,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(26,18,8,0.04) 0%, transparent 50%);
+        }
+
+        /* Modal prenom */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(26,18,8,0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(3px);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--paper);
+            padding: 36px;
+            border-radius: 2px;
+            width: 100%; max-width: 320px;
+            box-shadow: var(--shadow);
+            transform: translateY(12px);
+            transition: transform 0.25s ease;
+            text-align: center;
+        }
+        .modal-overlay.visible .modal { transform: translateY(0); }
+
+        .modal-logo { font-size: 28px; margin-bottom: 12px; }
+        .modal h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 20px; font-weight: 400;
+            color: var(--ink); margin-bottom: 6px;
+        }
+        .modal p { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+
+        .modal input {
+            width: 100%;
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            padding: 10px 14px;
+            border: 1.5px solid var(--line);
+            border-radius: 2px;
+            background: var(--bg);
+            color: var(--ink);
+            outline: none;
+            margin-bottom: 12px;
+            transition: border-color 0.15s;
+        }
+        .modal input:focus { border-color: var(--accent); }
+
+        .modal button {
+            width: 100%;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 10px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .modal button:hover { opacity: 0.88; }
+
+        /* Card principale */
+        .card {
+            background: var(--paper);
+            width: 100%; max-width: 460px;
+            border-radius: 2px;
+            box-shadow: var(--shadow), 0 0 0 1px rgba(26,18,8,0.06);
+            overflow: hidden;
+            animation: appear 0.4s ease both;
+        }
+        @keyframes appear {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .header { padding: 28px 32px 20px; border-bottom: 1px solid var(--line); position: relative; }
+        .header::after {
+            content: ''; position: absolute;
+            bottom: -1px; left: 32px;
+            width: 40px; height: 2px;
+            background: var(--accent);
+        }
+
+        .restaurant-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 11px; font-weight: 400;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 26px; font-weight: 400;
+            color: var(--ink); line-height: 1.1;
+        }
+
+        .meta {
+            margin-top: 14px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .sync-pill {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 10px; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--muted);
+        }
+        .sync-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--muted); transition: background 0.3s;
+        }
+        .sync-dot.live  { background: #4caf50; box-shadow: 0 0 0 2px rgba(76,175,80,0.2); }
+        .sync-dot.error { background: var(--accent); }
+
+        .user-badge {
+            font-size: 11px; color: var(--muted);
+            cursor: pointer; transition: color 0.15s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .user-badge:hover { color: var(--accent); }
+
+        .progress-bar { margin-top: 14px; height: 3px; background: var(--line); border-radius: 99px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+        .progress-label { margin-top: 7px; font-size: 11px; color: var(--muted); letter-spacing: 0.05em; }
+
+        /* Tasks */
+        .task-list { list-style: none; padding: 6px 0; }
+
+        .task-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 13px 32px;
+            border-bottom: 1px solid var(--line);
+            cursor: pointer;
+            transition: background 0.15s ease, opacity 0.3s ease;
+            user-select: none;
+        }
+        .task-item:last-child { border-bottom: none; }
+        .task-item:hover { background: rgba(26,18,8,0.02); }
+
+        .task-item.done {
+            background: var(--done-bg);
+            opacity: 0.72;
+        }
+
+        .checkbox {
+            width: 20px; height: 20px;
+            border: 1.5px solid var(--muted);
+            border-radius: 2px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .task-item.done .checkbox { background: var(--accent); border-color: var(--accent); }
+        .checkbox svg {
+            width: 12px; height: 12px;
+            stroke: white; stroke-width: 2.5;
+            stroke-linecap: round; stroke-linejoin: round;
+            fill: none; opacity: 0; transform: scale(0.5);
+            transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .task-item.done .checkbox svg { opacity: 1; transform: scale(1); }
+
+        .task-emoji { font-size: 15px; flex-shrink: 0; opacity: 0.7; }
+        .task-body { flex: 1; min-width: 0; }
+
+        .task-text {
+            font-size: 14px; color: var(--ink);
+            letter-spacing: 0.01em;
+            transition: color 0.25s ease;
+            position: relative; display: inline-block;
+        }
+        .task-text::after {
+            content: ''; position: absolute;
+            left: 0; top: 50%; height: 1px;
+            background: var(--muted); width: 0%;
+            transition: width 0.3s ease;
+        }
+        .task-item.done .task-text { color: var(--muted); }
+        .task-item.done .task-text::after { width: 100%; }
+
+        .task-meta {
+            font-size: 10px; color: var(--muted);
+            margin-top: 3px; letter-spacing: 0.04em;
+            min-height: 14px;
+        }
+        .task-meta .who { color: var(--accent); font-weight: 500; }
+
+        .section-label {
+            font-size: 9px; letter-spacing: 0.15em;
+            text-transform: uppercase; color: var(--muted);
+            padding: 10px 32px 4px;
+            border-bottom: 1px solid var(--line);
+            background: var(--bg);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 14px 32px;
+            border-top: 1px solid var(--line);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .reset-btn {
+            font-family: 'DM Mono', monospace;
+            font-size: 11px; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--muted);
+            background: none; border: none; cursor: pointer;
+            padding: 6px 0; transition: color 0.15s ease;
+        }
+        .reset-btn:hover { color: var(--accent); }
+        .done-count { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; }
+        .done-count span { color: var(--accent); font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<!-- Modal prenom -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-logo">🍝</div>
+        <h2>Bienvenue !</h2>
+        <p>Comment tu t'appelles ?<br>Ton prenom sera affiche quand tu coches une tache.</p>
+        <input type="text" id="nameInput" placeholder="Ton prenom..." maxlength="20" autocomplete="off" />
+        <button id="saveNameBtn">C'est parti</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="header">
+        <div class="restaurant-name">☀️ Le Soleil Italien</div>
+        <h1>Liste des<br><em>taches</em></h1>
+        <div class="meta">
+            <div class="sync-pill">
+                <div class="sync-dot" id="syncDot"></div>
+                <span id="syncLabel">Connexion...</span>
+            </div>
+            <div class="user-badge" id="userBadge" title="Changer de prenom">
+                <span>👤</span><span id="currentUser">—</span>
+            </div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Chargement...</div>
+    </div>
+
+    <div id="todoSection" style="display:none">
+        <div class="section-label">A faire</div>
+    </div>
+    <ul class="task-list" id="todoList"></ul>
+
+    <div id="doneSection" style="display:none">
+        <div class="section-label">Termine</div>
+    </div>
+    <ul class="task-list" id="doneList"></ul>
+
+    <div class="footer">
+        <div class="done-count" id="doneCount"><span>0</span> / 4 taches</div>
+        <button class="reset-btn" id="resetBtn">Tout reinitialiser</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, update, set }
+        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+        databaseURL: "https://to-do-list-e2d9b-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+
+    const TASKS = [
+        { id: "poussiere",  label: "Faire la poussiere",      emoji: "🧹" },
+        { id: "serpillere", label: "Passer la serpilliere",   emoji: "🪣" },
+        { id: "terrasse",   label: "Nettoyer la terrasse",    emoji: "🌿" },
+        { id: "vin",        label: "Remplir le frigo de vin", emoji: "🍷" },
+    ];
+
+    // ── Prenom ──
+    let currentUser = localStorage.getItem('soleil_user') || '';
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const nameInput    = document.getElementById('nameInput');
+    const currentUserEl = document.getElementById('currentUser');
+
+    function saveName() {
+        const val = nameInput.value.trim();
+        if (!val) return;
+        currentUser = val;
+        localStorage.setItem('soleil_user', val);
+        currentUserEl.textContent = val;
+        modalOverlay.classList.remove('visible');
+    }
+
+    document.getElementById('saveNameBtn').addEventListener('click', saveName);
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+    document.getElementById('userBadge').addEventListener('click', () => {
+        nameInput.value = currentUser;
+        modalOverlay.classList.add('visible');
+        nameInput.focus();
+    });
+
+    if (!currentUser) {
+        modalOverlay.classList.add('visible');
+        setTimeout(() => nameInput.focus(), 300);
+    } else {
+        currentUserEl.textContent = currentUser;
+    }
+
+    // ── Firebase ──
+    const app      = initializeApp(firebaseConfig);
+    const db       = getDatabase(app);
+    const tasksRef = ref(db, 'tasks');
+    const dot      = document.getElementById('syncDot');
+    const lbl      = document.getElementById('syncLabel');
+
+    onValue(tasksRef, (snapshot) => {
+        dot.className = 'sync-dot live';
+        lbl.textContent = 'En direct';
+        renderTasks(snapshot.val() || {});
+    }, () => {
+        dot.className = 'sync-dot error';
+        lbl.textContent = 'Hors ligne';
+        renderTasks({});
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        const reset = {};
+        TASKS.forEach(t => reset[t.id] = { done: false, who: null, at: null });
+        set(tasksRef, reset);
+    });
+
+    // ── Rendu ──
+    function renderTasks(data) {
+        window._taskData = data;
+
+        const todoList    = document.getElementById('todoList');
+        const doneList    = document.getElementById('doneList');
+        const todoSection = document.getElementById('todoSection');
+        const doneSection = document.getElementById('doneSection');
+
+        todoList.innerHTML = '';
+        doneList.innerHTML = '';
+
+        const todo = TASKS.filter(t => !data[t.id]?.done);
+        const done = TASKS.filter(t =>  data[t.id]?.done);
+
+        todoSection.style.display = todo.length ? 'block' : 'none';
+        doneSection.style.display = done.length ? 'block' : 'none';
+
+        todo.forEach(t => todoList.appendChild(makeItem(t, data[t.id])));
+        done.forEach(t => doneList.appendChild(makeItem(t, data[t.id])));
+
+        updateProgress(done.length, TASKS.length);
+    }
+
+    function makeItem(task, state) {
+        const li = document.createElement('li');
+        li.className = 'task-item' + (state?.done ? ' done' : '');
+
+        const metaText = state?.done && state?.who
+            ? `<span class="who">${state.who}</span> · ${state.at}`
+            : '';
+
+        li.innerHTML = `
+            <div class="checkbox">
+                <svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg>
+            </div>
+            <span class="task-emoji">${task.emoji}</span>
+            <div class="task-body">
+                <div class="task-text">${task.label}</div>
+                <div class="task-meta">${metaText}</div>
+            </div>`;
+
+        li.addEventListener('click', () => {
+            const data   = window._taskData || {};
+            const isDone = !data[task.id]?.done;
+            const now    = new Date();
+            const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            update(tasksRef, {
+                [task.id]: isDone
+                    ? { done: true, who: currentUser || '?', at: timeStr }
+                    : { done: false, who: null, at: null }
+            });
+        });
+
+        return li;
+    }
+
+    function updateProgress(done, total) {
+        document.getElementById('progressFill').style.width = (done / total * 100) + '%';
+        const word = done <= 1 ? 'tache completee' : 'taches completees';
+        document.getElementById('progressLabel').textContent = `${done} ${word}`;
+        document.getElementById('doneCount').innerHTML = `<span>${done}</span> / ${total} taches`;
+    }
+</script>
+</body>
+</html>
