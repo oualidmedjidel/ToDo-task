@@ -294,12 +294,19 @@
 </div>
 
 <script type="module">
-    import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
     import { getDatabase, ref, onValue, update, set }
-        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
     const firebaseConfig = {
-        databaseURL: "https://to-do-list-e2d9b-default-rtdb.europe-west1.firebasedatabase.app"
+        apiKey:            "AIzaSyCXFhraJWfoqgZzZt_oEQYDsBiu7XqHwoc",
+        authDomain:        "to-do-list-e2d9b.firebaseapp.com",
+        databaseURL:       "https://to-do-list-e2d9b-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId:         "to-do-list-e2d9b",
+        storageBucket:     "to-do-list-e2d9b.firebasestorage.app",
+        messagingSenderId: "325335792390",
+        appId:             "1:325335792390:web:c2cc4feebd6ef926f47c87",
+        measurementId:     "G-PYBVK1RXP5"
     };
 
     const TASKS = [
